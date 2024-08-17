@@ -8,9 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
       - name: Build the Docker image
         run: docker build . --file Dockerfile_ubuntu_apt --tag llvm-tutor:llvm-18
+      
+      - name: Generate unique tag
+        id: tag
+        run: echo "::set-output name=unique_tag::$(date +%Y%m%d%H%M%S)"
+      
+      - name: Tag Docker image for ttl.sh
+        run: docker tag llvm-tutor:llvm-18 ttl.sh/llvm-tutor:${{ steps.tag.outputs.unique_tag }}
+      
+      - name: Push to ttl.sh
+        run: docker push ttl.sh/llvm-tutor:${{ steps.tag.outputs.unique_tag }}
+      
+      - name: Output image URL
+        run: echo "Image pushed to ttl.sh/llvm-tutor:${{ steps.tag.outputs.unique_tag }}"
